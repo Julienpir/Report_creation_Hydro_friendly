@@ -10,8 +10,12 @@ Une fois le terminal ouvert, lancer le code `main.py`.
 ```
 python3 main.py
 ```
-*Soit en recopiant à la main, soit en copiant collant avec Ctrl+Maj V ou avec le clique molette*
+*Soit en recopiant à la main, soit en copiant collant avec Ctrl+Maj V ou avec le clic molette*
+
+Le code va ensuite générer le rapport de mission dans le dossier IHM.  
 
 
-Le code va générer le rapport de mission dans le dossier IHM.  
+
+## Pour changer les paramètres du code
+Ouvrir le script **main.py** et changer les variables **path**, **data_d**, **date_f** qui se situent en fin de code.
 
