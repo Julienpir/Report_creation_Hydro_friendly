@@ -36,8 +36,10 @@ Pour notre exemple : mpld3.save_html(fig3,"../IHM/drix_status/GasolineLevel.html
 Pour connecter une clef USB à la machine virtuelle :  
 https://www.pcastuces.com/pratique/astuces/4829.htm
 
-Pour éteindre la machine virtuelle : 
 
+
+Pour éteindre la machine virtuelle : 
+ ![Screenshot](Photos/ubuntu.jpg)
 
 
 
