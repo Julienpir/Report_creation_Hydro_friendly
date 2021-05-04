@@ -30,7 +30,7 @@ Puis identifier la variable qui stoque la figure, ici fig3. Et ajouter
 mpld3.save_html(variable,"directory/nom.html")
 Pour notre exemple : mpld3.save_html(fig3,"../IHM/drix_status/GasolineLevel.html")
 ```
-*(Penser à respecter les indexations)*
+*(Penser à respecter les indentations)*
  ![Screenshot](Photos/code.png)
  
 
