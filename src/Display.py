@@ -6,18 +6,17 @@ from plotly.subplots import make_subplots
 from sklearn import preprocessing
 from mpld3 import plugins
 from mpld3 import utils
-# import collections
 from mpld3.utils import get_id
 import collections.abc
 
 import Data_process as Dp # local import
-import IHM as ihm# local import
+import IHM as ihm # local import
 
 
+#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
+#					This script handles all the data graph function
+#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# This script handles all the data graph function
-# - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Define some CSS to control our custom labels
 css = """
@@ -54,8 +53,20 @@ def plot_gps(report_data, Data):
 	ax1.grid(True, alpha=0.3)
 
 
-	color10_16 = {'IdleBoot' : 'blue','Idle' : 'cyan','goto' : 'magenta','follow_me' : "#636efa",'box-in': "#00cc96","path_following" : "#EF553B","truc": 'brown'}
-	L_act = ['goto','IdleBoot','Idle','follow_me','box-in',"path_following"]
+	color10_16 = {'IdleBoot' : 'blue','Idle' : 'cyan','goto' : 'magenta','follow_me' : "#636efa",'box-in': "#00cc96","path_following" : "#EF553B","dds" : "darkred",
+	"gaps" : "turquoise","backseat" : "blueviolet","control_calibration" : "teal","auv_following": "seagreen","hovering": "sienna","auto_survey": "grey"}
+
+
+	label_names_unique = df['action_type'].unique()
+
+	cmt = 1
+	for val in label_names_unique:
+		if val not in list(color10_16.keys()):
+			print("Unknown action type :",val)
+			color10_16[val] = "deeppink"
+			cmt +=1
+
+	L_act = list(color10_16.keys())
 
 	nr_elements = len(L_act)
 	elements = []
@@ -107,7 +118,11 @@ def plot_gps(report_data, Data):
 
 	# - - - - - Distance travelled graph - - - - - -
 
-	df2 = Data.gps_UnderSamp_t
+	if len(Data.gps_raw) < 1000:
+		df2 = Dp.UnderSample(Data.gps_raw, 20)
+
+	else:
+		df2 = Dp.UnderSample(Data.gps_raw, 200)
 
 	fig2, ax2 = plt.subplots()
 	labels_d = []
@@ -162,7 +177,11 @@ def plot_gps(report_data, Data):
 			labels.append(str(df3["list_t"][k][0].strftime('%H:%M')))
 			list_dist.append(df3["list_d"][k])
 
-	borne_sup = int(np.max(list_speed)) + 2
+	if list_speed:
+		borne_sup = int(np.max(list_speed)) + 2
+
+	else:
+		borne_sup = 1
 
 
 	fig3, ax23 = plt.subplots()
@@ -430,9 +449,7 @@ def plot_iridium_status(report_data, Data):
 
 def plot_registration_status(Data, Title='Registration status'): # same operation as plot_drix_mode()
 
-	
-	encoder_dic = {"detached":0,"not registered":1,"registered":2,"registration denied":4}
-
+	encoder_dic = {"detached":0,"not registered":1,"registered":2,"registration denied":3}
 	label_names_unique = Data.iridium_status_raw['registration_status'].unique()
 
 	cmt = 1
@@ -481,7 +498,7 @@ def plot_diff_speed(Data, Title = " Comparison between desired and actual speed 
 
 		# - - Compute gsp speed - - - 
 
-		list_t.append(Data.gps_UnderSamp_d['Time'][k] )
+		list_t.append(Data.gps_UnderSamp_d['Time'][k])
 
 		dist = Data.gps_UnderSamp_d['list_dist'][k] - Data.gps_UnderSamp_d['list_dist'][k-(1+N)] # in km
 		dt = (Data.gps_UnderSamp_d["Time"][k] - Data.gps_UnderSamp_d['Time'][k-(1+N)]).total_seconds() # in s
@@ -492,6 +509,13 @@ def plot_diff_speed(Data, Title = " Comparison between desired and actual speed 
 
 	l = []
 
+	while (list_t[u] < Data.autopilot_raw['Time'][0]): # for the case, where the autopilot starts after 
+		u += 1 
+
+		if u == len(list_t):
+			break
+
+	u_ini = u
 	for k in range(len(Data.autopilot_raw['Time'])):
 
 		if u < len(list_t):
@@ -499,12 +523,16 @@ def plot_diff_speed(Data, Title = " Comparison between desired and actual speed 
 			if Data.autopilot_raw['Time'][k] >= list_t[u]:
 
 				# - - Compute autopilot mean speed - - 
-
 				list_speed_autopilot.append(np.mean(l))
 				u += 1
 				l = []
 
 			l.append(Data.autopilot_raw["Speed"][k])
+
+	
+	list_t = list_t[u_ini:u] # we select only the values which can be compared to the autopilot data
+	list_speed_gps = list_speed_gps[u_ini:u] 
+	list_speed_autopilot = list_speed_autopilot 
 
 
 	fig, ax = plt.subplots()
@@ -532,19 +560,56 @@ def plot_diff_speed(Data, Title = " Comparison between desired and actual speed 
 	return(fig)
 
 
+
+# = = = = = = = = = = = = = = = = = = = = rc_command  = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+def plot_rc_command(report_data, Data,Title = "Reception Mode"):
+
+	encoder_dic = {"UNKNOWN":0,"HF":1,"WIFI":2,"WIFI_VIRTUAL":3}
+	label_names_unique = Data.rc_command_raw['reception_mode'].unique()
+
+	cmt = 1
+	for val in label_names_unique:
+		if val not in list(encoder_dic.keys()):
+			print("Unknown reception_mode :",val)
+			encoder_dic[val] = -cmt
+			cmt +=1
+
+	y_axis = {"vals":list(encoder_dic.values()),"keys":list(encoder_dic.keys())}
+
+	list_msg = [encoder_dic[val] for val in Data.rc_command_raw['reception_mode']]
+
+	fig1 = plot_data_reduced(list_msg, Data.rc_command_raw['Time'],Title,y_axis)
+
+	ihm.ihm_rc_command(fig1)
+
+
+
+
 # = = = = = = = = = = = = = = = = = = = = Tools  = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 def plot_centered_sawtooth_curve(list_msg,list_te, Title = 'Binary MSG', n = 10,height = 2, width = 18):
 
 	fig, ax = plt.subplots()
 
+	# - - - Data Recovery - - -
+
 	Ly_max = [np.max(abs(list_msg[k:k + n])) for k in range(0,len(list_msg) - n,n)]
 	
+	if not Ly_max: # case where the list is empty
+		ax.plot([0],[0])
+		fig.set_figheight(height)
+		fig.set_figwidth(width)
+		plt.title(Title)
+		return(fig)
 
 	list_t = [str(k.strftime('%H:%M')) for k in list_te]
 	list_index = xlabel_list(list_t, c = 10)
 
 	Lx = list_index[:len(list_msg) - n:n]
+
+
+	# - - - Plot Creation - - -
 
 	fig.set_figheight(height)
 	fig.set_figwidth(width)
@@ -553,7 +618,7 @@ def plot_centered_sawtooth_curve(list_msg,list_te, Title = 'Binary MSG', n = 10,
 
 	ax.plot(Lx,Ly_max,'black')
 
-	print(Title,"taille ",len(Lx))
+	# print(Title,"taille ",len(Lx))
 	# mpld3.show()
 
 	plt.close()
@@ -568,14 +633,26 @@ def plot_sawtooth_curve(list_msg,list_te, Title = 'Binary MSG', n = 10, height =
 
 	fig, ax = plt.subplots()
 
+	# - - - Data Recovery - - -
+
 	Ly_max = [np.max(list_msg[k:k + n]) for k in range(0,len(list_msg) - n,n)]
 	Ly = [np.mean(list_msg[k:k + n]) for k in range(0,len(list_msg) - n,n)]
 	Ly_min = [np.min(list_msg[k:k + n]) for k in range(0,len(list_msg) - n,n)]
+
+	if not Ly: # case where the list is empty
+		ax.plot([0],[0])
+		fig.set_figheight(height)
+		fig.set_figwidth(width)
+		plt.title(Title)
+		return(fig)
 
 	list_t = [str(k.strftime('%H:%M')) for k in list_te]
 	list_index = xlabel_list(list_t, c = 10)
 
 	Lx = list_index[:len(list_msg) - n:n]
+
+
+	# - - - Plot Creation - - -
 
 	if np.max(Ly_max) < 10:
 		ax.set_ylim(np.min(Ly_min) - 1, np.max(Ly_max) + 1)
@@ -610,12 +687,24 @@ def plot_noisy_msg(list_msg,list_te, Title = 'Binary MSG', n = 10,height = 2, wi
 
 	fig, ax = plt.subplots()
 
+	# - - - Data Recovery - - -
+
 	Ly = [np.mean(list_msg[k:k + n]) for k in range(0,len(list_msg) - n,n)]
+
+	if not Ly: # case where the list is empty
+		ax.plot([0],[0])
+		fig.set_figheight(height)
+		fig.set_figwidth(width)
+		plt.title(Title)
+		return(fig)
 
 	list_t = [str(k.strftime('%H:%M')) for k in list_te]
 	list_index = xlabel_list(list_t, c = 10)
 
 	Lx = list_index[:len(list_msg) - n:n]
+
+
+	# - - - Plot Creation - - -
 
 	if np.max(Ly) < 10:
 		ax.set_ylim(np.min(Ly) - 1, np.max(Ly) + 1)
@@ -755,27 +844,38 @@ def subplots_col_ligne(n_data,n_col,n_row):
 
 def xlabel_list(Lx, c = 10): # c is the labels number   
 
-	pas = int(len(Lx)/c) 
-	reste = (len(Lx) - 1)%pas 
+	if len(Lx) > c:
 
-	if isinstance(Lx, list):
-		lala = Lx[::pas]
+		pas = int(len(Lx)/c) 
+		reste = (len(Lx) - 1)%pas 
 
-	else: # it's a dataframe variable
-		lala = Lx[::pas].values.tolist()
+		if isinstance(Lx, list):
+			lala = Lx[::pas]
 
-	x = pd.Series(np.zeros(len(lala)), index = lala)
-	x.plot(alpha=0.)
-	plt.xticks(range(len(x)), x.index) 
+		else: # it's a dataframe variable
+			lala = Lx[::pas].values.tolist()
 
-	a = 0
-	b = len(lala) - 1 + reste*(1/pas)
-	c = len(Lx)
+		x = pd.Series(np.zeros(len(lala)), index = lala)
+		x.plot(alpha=0.)
+		plt.xticks(range(len(x)), x.index) 
 
-	t = np.linspace(a,b,c)
+		a = 0
+		b = len(lala) - 1 + reste*(1/pas)
+		c = len(Lx)
 
+		t = np.linspace(a,b,c)
+
+	else:
+
+		lala = Lx.values.tolist()
+		x = pd.Series(np.zeros(len(lala)), index = lala)
+		x.plot(alpha=0.)
+		plt.xticks(range(len(x)), x.index) 
+
+		t = list(range(len(lala)))
+
+	
 	return(t)
-
 
 # - - - - - - - - - - - - 
 
@@ -804,6 +904,7 @@ def filter_binary_msg(data, condition): # report the times (start and end) when 
             v_ini += 1
 
     return(list_event)
+
 
 
 
