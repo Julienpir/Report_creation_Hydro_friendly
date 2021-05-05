@@ -6,8 +6,9 @@ Code permettant de générer une version bêta du rapport de mission
 Une fois que vous êtes à l'emplacement où vous voulez télécharger les fichiers.  
 Clique droit > Open in Terminal.
 ```
-python3 main.py
+git clone https://github.com/Julienpir/Report_creation_Hydro_friendly.git
 ```
+*(Soit en recopiant à la main, soit en copiant collant avec Ctrl+Maj V ou avec le clic molette)*
 
 
 ## Pour lancer le code
