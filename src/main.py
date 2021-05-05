@@ -4,7 +4,6 @@ import os
 import operator
 from datetime import datetime, timedelta
 import shutil
-import command 
 from pyproj import Proj
 
 import Data_process as Dp # local import
@@ -131,6 +130,18 @@ class Drix_data(object):
         self.rosbag2pd(L_bags)
 
 
+    def test_rosbag(self,bagfile):
+        path = bagfile.bag_path
+        try:
+            bag = rosbag.Bag(path)
+            return(bag)
+
+        except:
+            subprocess.run(["rosbag", "reindex", path])
+            bag = rosbag.Bag(path)
+            return(bag)
+
+
     def rosbag2pd(self, L_bags):
 
         if len(L_bags) == 0: # no data to deal with
@@ -176,7 +187,7 @@ class Drix_data(object):
             dic_iridium_status = {'Time_raw':[],'Time':[],'Time_str':[],'is_iridium_link_ok':[],"signal_strength": [],"registration_status": [],"mo_status_code": [],"mo_status": [],"last_mo_msg_sequence_number": [],"mt_status_code": [],"mt_status": [],"mt_msg_sequence_number": [],"mt_length": [],"gss_queued_msgs": [],"cmd_queue": [],"failed_transaction_percent": []}
             dic_autopilot = {'Time_raw':[],'Time':[],'Time_str':[],'ActiveSpeed':[],'Speed':[], 'Delta' : [],'Regime':[],'yawRate':[]}
 
-            bag = rosbag.Bag(bagfile.bag_path)
+            bag = self.test_rosbag(bagfile)
 
             for topic, msg, t in bag.read_messages(topics = self.list_topics):
 
@@ -296,7 +307,6 @@ class Drix_data(object):
                         dic_telemetry['time_left_main_battery_mins'].append(m.time_left_main_battery_mins)
                         dic_telemetry['engine_battery_voltage_V'].append(m.engine_battery_voltage_V)
 
-                  
 
                     if topic == '/mothership_gps':
                         m:Gps = msg 
@@ -306,12 +316,14 @@ class Drix_data(object):
                         dic_mothership['latitude'].append(m.latitude)
                         dic_mothership['longitude'].append(m.longitude)
 
+
                     if topic == '/rc_command':
                         m:RemoteController = msg
                         dic_rc_command['Time_raw'].append(time_raw)
                         dic_rc_command['Time'].append(time)
                         dic_rc_command['Time_str'].append(time_str)
                         dic_rc_command['reception_mode'].append(m.reception_mode)
+                        
 
                     if topic == '/gpu_state':
                         m:GpuState = msg
@@ -648,7 +660,7 @@ if __name__ == '__main__':
 
     path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
     date_d = "01-02-2021-10-00-00"
-    date_f = "01-02-2021-10-20-00"
+    date_f = "01-02-2021-10-05-00"
 
 
     code_launcher(date_d, date_f, path)
