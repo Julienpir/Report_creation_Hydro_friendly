@@ -2,6 +2,13 @@
 
 Code permettant de générer une version bêta du rapport de mission
 
+## Pour récupérer le projet
+Une fois que vous êtes à l'emplacement où vous voulez télécharger les fichiers.  
+Clique droit > Open in Terminal.
+```
+python3 main.py
+```
+
 
 ## Pour lancer le code
 Une fois que la machine virtuelle est lancée, ouvrir l'emplacement du code (le dossier src),  
