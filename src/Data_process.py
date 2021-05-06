@@ -166,7 +166,7 @@ def filter_binary_msg(data, condition): # report the times (start and end) when 
     l = data.query(condition).index.tolist()
 
     if not(l):
-        # print('Nothing found for ',condition)
+        print('Nothing found for ',condition)
         return None
 
     v_ini = l[0]
