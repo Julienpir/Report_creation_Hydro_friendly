@@ -188,8 +188,15 @@ class Drix_data(object):
 
         except:
             subprocess.run(["rosbag", "reindex", path])
+            pass
+
+        try:
             bag = rosbag.Bag(path)
             return(bag)
+
+        except:
+            print(bagfile.name, ' is not readable')
+            return(False)
 
 
     def rosbag2pd(self, L_bags):
@@ -245,205 +252,206 @@ class Drix_data(object):
 
             bag = self.test_rosbag(bagfile)
 
-            for topic, msg, t in bag.read_messages(topics = self.list_topics):
+            if bag != False:
 
-                time_raw = t.to_sec()
-                time = datetime.fromtimestamp(int(t.to_sec())) + time_delta 
-                time_str = str(time)
+                for topic, msg, t in bag.read_messages(topics = self.list_topics):
 
-                if time <= bagfile.datetime_date_f:
+                    time_raw = t.to_sec()
+                    time = datetime.fromtimestamp(int(t.to_sec())) + time_delta 
+                    time_str = str(time)
 
-                    if topic == '/gps': 
-                        m:Gps = msg 
-                        dic_gps['Time_raw'].append(time_raw)
-                        dic_gps['Time'].append(time)
-                        dic_gps['Time_str'].append(time_str)
-                        dic_gps['latitude'].append(m.latitude)
-                        dic_gps['longitude'].append(m.longitude)
-                        dic_gps['action_type'].append(bagfile.action_name)
-                        dic_gps['action_type_index'].append(index_act)                        
-                        dic_gps['fix_quality'].append(m.fix_quality)
+                    if time <= bagfile.datetime_date_f:
 
-                        x,y = p(m.latitude,m.longitude)
-                        dic_gps['list_x'].append(x)
-                        dic_gps['list_y'].append(y)
+                        if topic == '/gps': 
+                            m:Gps = msg 
+                            dic_gps['Time_raw'].append(time_raw)
+                            dic_gps['Time'].append(time)
+                            dic_gps['Time_str'].append(time_str)
+                            dic_gps['latitude'].append(m.latitude)
+                            dic_gps['longitude'].append(m.longitude)
+                            dic_gps['action_type'].append(bagfile.action_name)
+                            dic_gps['action_type_index'].append(index_act)                        
+                            dic_gps['fix_quality'].append(m.fix_quality)
 
-                    if topic == '/drix_status':
-                        m:DrixOutput = msg
-                        dic_drix_status['Time_raw'].append(time_raw)
-                        dic_drix_status['Time'].append(time)
-                        dic_drix_status['Time_str'].append(time_str)
-                        dic_drix_status['thruster_RPM'].append(m.thruster_RPM)
-                        dic_drix_status['rudderAngle_deg'].append(m.rudderAngle_deg)
-                        dic_drix_status['gasolineLevel_percent'].append(m.gasolineLevel_percent)
-                        dic_drix_status['drix_mode'].append(m.drix_mode)
-                        dic_drix_status['emergency_mode'].append(m.emergency_mode)
-                        dic_drix_status['drix_clutch'].append(m.drix_clutch)
-                        dic_drix_status['remoteControlLost'].append(0)
-                        #dic_drix_status['remoteControlLost'].append(m.remoteControlLost)
-                        dic_drix_status['keel_state'].append(m.keel_state)
-                        dic_drix_status['shutdown_requested'].append(m.shutdown_requested)
-                        #dic_drix_status['reboot_requested'].append(m.reboot_requested)
-                        dic_drix_status['reboot_requested'].append(0)
+                            x,y = p(m.latitude,m.longitude)
+                            dic_gps['list_x'].append(x)
+                            dic_gps['list_y'].append(y)
+
+                        if topic == '/drix_status':
+                            m:DrixOutput = msg
+                            dic_drix_status['Time_raw'].append(time_raw)
+                            dic_drix_status['Time'].append(time)
+                            dic_drix_status['Time_str'].append(time_str)
+
+                            dic_drix_status['thruster_RPM'].append(m.thruster_RPM)
+                            dic_drix_status['rudderAngle_deg'].append(m.rudderAngle_deg)
+                            dic_drix_status['gasolineLevel_percent'].append(m.gasolineLevel_percent)
+                            dic_drix_status['drix_mode'].append(m.drix_mode)
+                            dic_drix_status['emergency_mode'].append(m.emergency_mode)
+                            dic_drix_status['drix_clutch'].append(m.drix_clutch)
+                            dic_drix_status['remoteControlLost'].append(0)
+                            # dic_drix_status['remoteControlLost'].append(m.remoteControlLost)
+                            dic_drix_status['keel_state'].append(m.keel_state)
+                            dic_drix_status['shutdown_requested'].append(m.shutdown_requested)
+                            dic_drix_status['reboot_requested'].append(0)
+                            # dic_drix_status['reboot_requested'].append(m.reboot_requested)
+                          
+                        if topic == '/d_phins/aipov':
+                            m:aipov = msg 
+                            dic_phins['Time_raw'].append(time_raw)
+                            dic_phins['Time'].append(time)
+                            dic_phins['Time_str'].append(time_str)
+                            dic_phins['headingDeg'].append(m.headingDeg)
+                            dic_phins['rollDeg'].append(m.rollDeg)
+                            dic_phins['pitchDeg'].append(m.pitchDeg)
+                            dic_phins['latitudeDeg'].append(m.latitudeDeg)
+                            dic_phins['longitudeDeg'].append(m.longitudeDeg)
+                     
+                        if topic == '/d_phins/ins':  
+                            m:Ins = msg 
+                            dic_phins['Time_raw'].append(time_raw)
+                            dic_phins['Time'].append(time)
+                            dic_phins['Time_str'].append(time_str)
+                            dic_phins['headingDeg'].append(m.headingDeg)
+                            dic_phins['rollDeg'].append(m.rollDeg)
+                            dic_phins['pitchDeg'].append(m.pitchDeg)
+                            dic_phins['latitudeDeg'].append(m.latitude)
+                            dic_phins['longitudeDeg'].append(m.longitude)
+
+                        if topic == '/telemetry2': 
+                            m:Telemetry2 = msg
+                            dic_telemetry['Time_raw'].append(time_raw)
+                            dic_telemetry['Time'].append(time)
+                            dic_telemetry['Time_str'].append(time_str)
+                            dic_telemetry['is_drix_started'].append(m.is_drix_started)
+                            dic_telemetry['is_navigation_lights_on'].append(m.is_navigation_lights_on)
+                            dic_telemetry['is_foghorn_on'].append(m.is_foghorn_on)
+                            dic_telemetry['is_fans_on'].append(m.is_fans_on)
+                            dic_telemetry['oil_pressure_Bar'].append(m.oil_pressure_Bar)
+                            dic_telemetry['engine_water_temperature_deg'].append(m.engine_water_temperature_deg)
+                            dic_telemetry['is_water_temperature_alarm_on'].append(m.is_water_temperature_alarm_on)
+                            dic_telemetry['is_oil_pressure_alarm_on'].append(m.is_oil_pressure_alarm_on)
+                            dic_telemetry['is_water_in_fuel_on'].append(m.is_water_in_fuel_on)
+                            dic_telemetry['engineon_hours_h'].append(m.engineon_hours_h)
+                            dic_telemetry['main_battery_voltage_V'].append(m.main_battery_voltage_V)
+                            dic_telemetry['backup_battery_voltage_V'].append(m.backup_battery_voltage_V)
+                            dic_telemetry['engine_battery_voltage_V'].append(m.engine_battery_voltage_V)
+                            dic_telemetry['percent_main_battery'].append(m.percent_main_battery)
+                            dic_telemetry['percent_backup_battery'].append(m.percent_backup_battery)
+                            dic_telemetry['consumed_current_main_battery_Ah'].append(m.consumed_current_main_battery_Ah)
+                            dic_telemetry['consumed_current_backup_battery_Ah'].append(m.consumed_current_backup_battery_Ah)
+                            dic_telemetry['current_main_battery_A'].append(m.current_main_battery_A)
+                            dic_telemetry['current_backup_battery_A'].append(m.current_backup_battery_A)
+                            dic_telemetry['time_left_main_battery_mins'].append(m.time_left_main_battery_mins)
+                            dic_telemetry['time_left_backup_battery_mins'].append(m.time_left_backup_battery_mins)
+                            dic_telemetry['electronics_temperature_deg'].append(m.electronics_temperature_deg)
+                            dic_telemetry['electronics_hygrometry_percent'].append(m.electronics_hygrometry_percent)
+                            dic_telemetry['electronics_water_ingress'].append(m.electronics_water_ingress)
+                            dic_telemetry['electronics_fire_on_board'].append(m.electronics_fire_on_board)
+                            dic_telemetry['engine_temperature_deg'].append(m.engine_temperature_deg)
+                            dic_telemetry['engine_hygrometry_percent'].append(m.engine_hygrometry_percent)
+                            dic_telemetry['engine_water_ingress'].append(m.engine_water_ingress)
+                            dic_telemetry['engine_fire_on_board'].append(m.engine_fire_on_board)
+                   
+                        if topic == '/telemetry3':
+                            m:Telemetry3 = msg
+                            dic_telemetry['Time_raw'].append(time_raw)
+                            dic_telemetry['Time'].append(time)
+                            dic_telemetry['Time_str'].append(time_str)
+                            dic_telemetry['oil_pressure_Bar'].append(m.oil_pressure_Bar)
+                            dic_telemetry['engine_water_temperature_deg'].append(m.engine_water_temperature_deg)
+                            dic_telemetry['main_battery_voltage_V'].append(m.main_battery_voltage_V)
+                            dic_telemetry['percent_main_battery'].append(m.percent_main_battery)
+                            dic_telemetry['percent_backup_battery'].append(m.percent_backup_battery)
+                            dic_telemetry['consumed_current_main_battery_Ah'].append(m.consumed_current_main_battery_Ah)
+                            dic_telemetry['current_main_battery_A'].append(m.current_main_battery_A)
+                            dic_telemetry['time_left_main_battery_mins'].append(m.time_left_main_battery_mins)
+                            dic_telemetry['engine_battery_voltage_V'].append(m.engine_battery_voltage_V)
                       
-                    if topic == '/d_phins/aipov':
-                        m:aipov = msg 
-                        dic_phins['Time_raw'].append(time_raw)
-                        dic_phins['Time'].append(time)
-                        dic_phins['Time_str'].append(time_str)
-                        dic_phins['headingDeg'].append(m.headingDeg)
-                        dic_phins['rollDeg'].append(m.rollDeg)
-                        dic_phins['pitchDeg'].append(m.pitchDeg)
-                        dic_phins['latitudeDeg'].append(m.latitudeDeg)
-                        dic_phins['longitudeDeg'].append(m.longitudeDeg)
-                 
-                    if topic == '/d_phins/ins':  
-                        m:Ins = msg 
-                        dic_phins['Time_raw'].append(time_raw)
-                        dic_phins['Time'].append(time)
-                        dic_phins['Time_str'].append(time_str)
-                        dic_phins['headingDeg'].append(m.headingDeg)
-                        dic_phins['rollDeg'].append(m.rollDeg)
-                        dic_phins['pitchDeg'].append(m.pitchDeg)
-                        dic_phins['latitudeDeg'].append(m.latitude)
-                        dic_phins['longitudeDeg'].append(m.longitude)
+                        if topic == '/mothership_gps':
+                            m:Gps = msg 
+                            dic_mothership['Time_raw'].append(time_raw)
+                            dic_mothership['Time'].append(time)
+                            dic_mothership['Time_str'].append(time_str)
+                            dic_mothership['latitude'].append(m.latitude)
+                            dic_mothership['longitude'].append(m.longitude)
 
-                    if topic == '/telemetry2': 
-                        m:Telemetry2 = msg
-                        dic_telemetry['Time_raw'].append(time_raw)
-                        dic_telemetry['Time'].append(time)
-                        dic_telemetry['Time_str'].append(time_str)
-                        dic_telemetry['is_drix_started'].append(m.is_drix_started)
-                        dic_telemetry['is_navigation_lights_on'].append(m.is_navigation_lights_on)
-                        dic_telemetry['is_foghorn_on'].append(m.is_foghorn_on)
-                        dic_telemetry['is_fans_on'].append(m.is_fans_on)
-                        dic_telemetry['oil_pressure_Bar'].append(m.oil_pressure_Bar)
-                        dic_telemetry['engine_water_temperature_deg'].append(m.engine_water_temperature_deg)
-                        dic_telemetry['is_water_temperature_alarm_on'].append(m.is_water_temperature_alarm_on)
-                        dic_telemetry['is_oil_pressure_alarm_on'].append(m.is_oil_pressure_alarm_on)
-                        dic_telemetry['is_water_in_fuel_on'].append(m.is_water_in_fuel_on)
-                        dic_telemetry['engineon_hours_h'].append(m.engineon_hours_h)
-                        dic_telemetry['main_battery_voltage_V'].append(m.main_battery_voltage_V)
-                        dic_telemetry['backup_battery_voltage_V'].append(m.backup_battery_voltage_V)
-                        dic_telemetry['engine_battery_voltage_V'].append(m.engine_battery_voltage_V)
-                        dic_telemetry['percent_main_battery'].append(m.percent_main_battery)
-                        dic_telemetry['percent_backup_battery'].append(m.percent_backup_battery)
-                        dic_telemetry['consumed_current_main_battery_Ah'].append(m.consumed_current_main_battery_Ah)
-                        dic_telemetry['consumed_current_backup_battery_Ah'].append(m.consumed_current_backup_battery_Ah)
-                        dic_telemetry['current_main_battery_A'].append(m.current_main_battery_A)
-                        dic_telemetry['current_backup_battery_A'].append(m.current_backup_battery_A)
-                        dic_telemetry['time_left_main_battery_mins'].append(m.time_left_main_battery_mins)
-                        dic_telemetry['time_left_backup_battery_mins'].append(m.time_left_backup_battery_mins)
-                        dic_telemetry['electronics_temperature_deg'].append(m.electronics_temperature_deg)
-                        dic_telemetry['electronics_hygrometry_percent'].append(m.electronics_hygrometry_percent)
-                        dic_telemetry['electronics_water_ingress'].append(m.electronics_water_ingress)
-                        dic_telemetry['electronics_fire_on_board'].append(m.electronics_fire_on_board)
-                        dic_telemetry['engine_temperature_deg'].append(m.engine_temperature_deg)
-                        dic_telemetry['engine_hygrometry_percent'].append(m.engine_hygrometry_percent)
-                        dic_telemetry['engine_water_ingress'].append(m.engine_water_ingress)
-                        dic_telemetry['engine_fire_on_board'].append(m.engine_fire_on_board)
-               
-                    if topic == '/telemetry3':
-                        m:Telemetry3 = msg
-                        dic_telemetry['Time_raw'].append(time_raw)
-                        dic_telemetry['Time'].append(time)
-                        dic_telemetry['Time_str'].append(time_str)
-                        dic_telemetry['oil_pressure_Bar'].append(m.oil_pressure_Bar)
-                        dic_telemetry['engine_water_temperature_deg'].append(m.engine_water_temperature_deg)
-                        dic_telemetry['main_battery_voltage_V'].append(m.main_battery_voltage_V)
-                        dic_telemetry['percent_main_battery'].append(m.percent_main_battery)
-                        dic_telemetry['percent_backup_battery'].append(m.percent_backup_battery)
-                        dic_telemetry['consumed_current_main_battery_Ah'].append(m.consumed_current_main_battery_Ah)
-                        dic_telemetry['current_main_battery_A'].append(m.current_main_battery_A)
-                        dic_telemetry['time_left_main_battery_mins'].append(m.time_left_main_battery_mins)
-                        dic_telemetry['engine_battery_voltage_V'].append(m.engine_battery_voltage_V)
-                  
-                    if topic == '/mothership_gps':
-                        m:Gps = msg 
-                        dic_mothership['Time_raw'].append(time_raw)
-                        dic_mothership['Time'].append(time)
-                        dic_mothership['Time_str'].append(time_str)
-                        dic_mothership['latitude'].append(m.latitude)
-                        dic_mothership['longitude'].append(m.longitude)
+                        if topic == '/rc_command':
+                            m:RemoteController = msg
+                            dic_rc_command['Time_raw'].append(time_raw)
+                            dic_rc_command['Time'].append(time)
+                            dic_rc_command['Time_str'].append(time_str)
+                            dic_rc_command['reception_mode'].append(m.reception_mode)
 
-                    if topic == '/rc_command':
-                        m:RemoteController = msg
-                        dic_rc_command['Time_raw'].append(time_raw)
-                        dic_rc_command['Time'].append(time)
-                        dic_rc_command['Time_str'].append(time_str)
-                        dic_rc_command['reception_mode'].append(m.reception_mode)
+                        if topic == '/gpu_state':
+                            m:GpuState = msg
+                            dic_gpu_state['Time_raw'].append(time_raw)
+                            dic_gpu_state['Time'].append(time)
+                            dic_gpu_state['Time_str'].append(time_str)
+                            dic_gpu_state["temperature_deg_c"].append(m.temperature_deg_c)
+                            dic_gpu_state["gpu_utilization_percent"].append(m.gpu_utilization_percent)
+                            dic_gpu_state["mem_utilization_percent"].append(m.mem_utilization_percent)
+                            dic_gpu_state["used_mem_GB"].append(m.used_mem_GB)
+                            dic_gpu_state["total_mem_GB"].append(m.total_mem_GB)
+                            dic_gpu_state["power_consumption_W"].append(m.power_consumption_W)
 
-                    if topic == '/gpu_state':
-                        m:GpuState = msg
-                        dic_gpu_state['Time_raw'].append(time_raw)
-                        dic_gpu_state['Time'].append(time)
-                        dic_gpu_state['Time_str'].append(time_str)
-                        dic_gpu_state["temperature_deg_c"].append(m.temperature_deg_c)
-                        dic_gpu_state["gpu_utilization_percent"].append(m.gpu_utilization_percent)
-                        dic_gpu_state["mem_utilization_percent"].append(m.mem_utilization_percent)
-                        dic_gpu_state["used_mem_GB"].append(m.used_mem_GB)
-                        dic_gpu_state["total_mem_GB"].append(m.total_mem_GB)
-                        dic_gpu_state["power_consumption_W"].append(m.power_consumption_W)
+                        if topic == '/trimmer_status':
+                            m:TrimmerStatus = msg
+                            dic_trimmer_status['Time_raw'].append(time_raw)
+                            dic_trimmer_status['Time'].append(time)
+                            dic_trimmer_status['Time_str'].append(time_str) 
+                            dic_trimmer_status["primary_powersupply_consumption_A"].append(m.primary_powersupply_consumption_A)
+                            dic_trimmer_status["secondary_powersupply_consumption_A"].append(m.secondary_powersupply_consumption_A)
+                            dic_trimmer_status["motor_temperature_degC"].append(m.motor_temperature_degC)
+                            dic_trimmer_status["pcb_temperature_degC"].append(m.pcb_temperature_degC)
+                            dic_trimmer_status["relative_humidity_percent"].append(m.relative_humidity_percent)
+                            dic_trimmer_status["position_deg"].append(m.position_deg)
+                     
+                        if topic == '/kongsberg_2040/kmstatus':
+                            m:KongsbergStatus = msg 
+                            dic_kongsberg_status['Time_raw'].append(m.time_sync)
+                            dic_kongsberg_status['pu_powered'].append(m.pu_powered)
+                            dic_kongsberg_status['pu_connected'].append(m.pu_connected)
+                            dic_kongsberg_status['position_1'].append(m.position_1)
 
-                    if topic == '/trimmer_status':
-                        m:TrimmerStatus = msg
-                        dic_trimmer_status['Time_raw'].append(time_raw)
-                        dic_trimmer_status['Time'].append(time)
-                        dic_trimmer_status['Time_str'].append(time_str) 
-                        dic_trimmer_status["primary_powersupply_consumption_A"].append(m.primary_powersupply_consumption_A)
-                        dic_trimmer_status["secondary_powersupply_consumption_A"].append(m.secondary_powersupply_consumption_A)
-                        dic_trimmer_status["motor_temperature_degC"].append(m.motor_temperature_degC)
-                        dic_trimmer_status["pcb_temperature_degC"].append(m.pcb_temperature_degC)
-                        dic_trimmer_status["relative_humidity_percent"].append(m.relative_humidity_percent)
-                        dic_trimmer_status["position_deg"].append(m.position_deg)
-                 
-                    if topic == '/kongsberg_2040/kmstatus':
-                        m:KongsbergStatus = msg 
-                        dic_kongsberg_status['Time_raw'].append(m.time_sync)
-                        dic_kongsberg_status['pu_powered'].append(m.pu_powered)
-                        dic_kongsberg_status['pu_connected'].append(m.pu_connected)
-                        dic_kongsberg_status['position_1'].append(m.position_1)
+                        if topic == '/d_iridium/iridium_status':
+                            m:IridiumStatus = msg
+                            dic_iridium_status['Time_raw'].append(time_raw)
+                            dic_iridium_status['Time'].append(time)
+                            dic_iridium_status['Time_str'].append(time_str) 
+                            dic_iridium_status['is_iridium_link_ok'].append(m.is_iridium_link_ok)
+                            dic_iridium_status['signal_strength'].append(m.signal_strength)
+                            dic_iridium_status['registration_status'].append(m.registration_status)
+                            dic_iridium_status['mo_status_code'].append(m.mo_status_code)
+                            dic_iridium_status['mo_status'].append(m.mo_status)
+                            dic_iridium_status['last_mo_msg_sequence_number'].append(m.last_mo_msg_sequence_number)
+                            dic_iridium_status['mt_status_code'].append(m.mt_status_code)
+                            dic_iridium_status['mt_status'].append(m.mt_status)
+                            dic_iridium_status['mt_msg_sequence_number'].append(m.mt_msg_sequence_number)
+                            dic_iridium_status['mt_length'].append(m.mt_length)
+                            dic_iridium_status['gss_queued_msgs'].append(m.gss_queued_msgs)
+                            dic_iridium_status['cmd_queue'].append(m.cmd_queue)
+                            dic_iridium_status['failed_transaction_percent'].append(m.failed_transaction_percent)
 
-                    if topic == '/d_iridium/iridium_status':
-                        m:IridiumStatus = msg
-                        dic_iridium_status['Time_raw'].append(time_raw)
-                        dic_iridium_status['Time'].append(time)
-                        dic_iridium_status['Time_str'].append(time_str) 
-                        dic_iridium_status['is_iridium_link_ok'].append(m.is_iridium_link_ok)
-                        dic_iridium_status['signal_strength'].append(m.signal_strength)
-                        dic_iridium_status['registration_status'].append(m.registration_status)
-                        dic_iridium_status['mo_status_code'].append(m.mo_status_code)
-                        dic_iridium_status['mo_status'].append(m.mo_status)
-                        dic_iridium_status['last_mo_msg_sequence_number'].append(m.last_mo_msg_sequence_number)
-                        dic_iridium_status['mt_status_code'].append(m.mt_status_code)
-                        dic_iridium_status['mt_status'].append(m.mt_status)
-                        dic_iridium_status['mt_msg_sequence_number'].append(m.mt_msg_sequence_number)
-                        dic_iridium_status['mt_length'].append(m.mt_length)
-                        dic_iridium_status['gss_queued_msgs'].append(m.gss_queued_msgs)
-                        dic_iridium_status['cmd_queue'].append(m.cmd_queue)
-                        dic_iridium_status['failed_transaction_percent'].append(m.failed_transaction_percent)
+                        if topic == '/autopilot_node/ixblue_autopilot/autopilot_output':
+                            m:AutopilotOutput = msg 
+                            dic_autopilot['Time_raw'].append(time_raw)
+                            dic_autopilot['Time'].append(time)
+                            dic_autopilot['Time_str'].append(time_str) 
+                            dic_autopilot['ActiveSpeed'].append(m.ActiveSpeed)
+                            dic_autopilot['Speed'].append(m.Speed)
+                            dic_autopilot['Delta'].append(m.Delta)
+                            dic_autopilot['Regime'].append(m.Regime)
+                            dic_autopilot['yawRate'].append(m.yawRate)
 
-                    if topic == '/autopilot_node/ixblue_autopilot/autopilot_output':
-                        m:AutopilotOutput = msg 
-                        dic_autopilot['Time_raw'].append(time_raw)
-                        dic_autopilot['Time'].append(time)
-                        dic_autopilot['Time_str'].append(time_str) 
-                        dic_autopilot['ActiveSpeed'].append(m.ActiveSpeed)
-                        dic_autopilot['Speed'].append(m.Speed)
-                        dic_autopilot['Delta'].append(m.Delta)
-                        dic_autopilot['Regime'].append(m.Regime)
-                        dic_autopilot['yawRate'].append(m.yawRate)
+        
+                        if topic == '/diagnostics':
+                            m:DiagnosticArray = msg
 
-    
-                    if topic == '/diagnostics':
-                        m:DiagnosticArray = msg
-
-                        for k in m.status:
-                            m1:DiagnosticStatus = k
-                            Diag = diag(m1.name, m1.message, m1.level, time_raw, time, time_str)
-                            L_diag.ad_diag(Diag)
-
-         
+                            for k in m.status:
+                                m1:DiagnosticStatus = k
+                                Diag = diag(m1.name, m1.message, m1.level, time_raw, time, time_str)
+                                L_diag.ad_diag(Diag)
 
 
             print('Import rosbag : ',index,'/',len(L_bags))
@@ -489,7 +497,9 @@ class Drix_data(object):
         later = datetime.now()
         diff = later - now
 
+        print("  ")
         print('Rosbag data extraction finished, in ',str(diff))
+        print("  ")
 
         if len(gps_List_pd) > 0:
             self.gps_raw = pd.concat(gps_List_pd, ignore_index=True)
@@ -575,6 +585,8 @@ class Drix_data(object):
 
         self.diagnostics_raw = L_diag
         print("Diagnostics data imported")
+        print("  ")
+
 
 
 
@@ -611,6 +623,7 @@ def recup_data(date_d, date_f, path):
     L_bags = select_rosbagFile(l_bags) # Final list of bagfile object
 
     return(L_bags)
+
 
 # -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 
@@ -706,8 +719,8 @@ if __name__ == '__main__':
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
     path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
-    date_d = "01-02-2021-10-00-00"
-    date_f = "01-02-2021-10-05-00"
+    date_d = "07-05-2021-06-00-00"
+    date_f = "07-05-2021-11-41-09"
 
 
     code_launcher(date_d, date_f, path)
