@@ -279,10 +279,12 @@ class Drix_data(object):
                         dic_drix_status['drix_mode'].append(m.drix_mode)
                         dic_drix_status['emergency_mode'].append(m.emergency_mode)
                         dic_drix_status['drix_clutch'].append(m.drix_clutch)
-                        dic_drix_status['remoteControlLost'].append(m.remoteControlLost)
+                        dic_drix_status['remoteControlLost'].append(0)
+                        #dic_drix_status['remoteControlLost'].append(m.remoteControlLost)
                         dic_drix_status['keel_state'].append(m.keel_state)
                         dic_drix_status['shutdown_requested'].append(m.shutdown_requested)
-                        dic_drix_status['reboot_requested'].append(m.reboot_requested)
+                        #dic_drix_status['reboot_requested'].append(m.reboot_requested)
+                        dic_drix_status['reboot_requested'].append(0)
                       
                     if topic == '/d_phins/aipov':
                         m:aipov = msg 
