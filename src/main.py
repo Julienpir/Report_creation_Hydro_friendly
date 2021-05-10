@@ -34,15 +34,18 @@ from drix_msgs.msg import RemoteController
 
 class bagfile(object):
 
-    def __init__(self, name, path, path_data_file, date_d, date_f):
+    def __init__(self, name_folder, name_bag, path, path_data_file, date_d, date_f):
         self.path_file = path
         self.path_data_file = path_data_file
-        self.name = name
+        self.name_folder = name_folder
+        self.name_bag = name_bag
         self.date_d = date_d
         self.date_f = date_f
         self.datetime_date_d = self.recup_date(self.date_d, True)
         self.datetime_date_f = self.recup_date(self.date_f, True)
         self.bag_path = None
+
+        self.recup_date_file()
 
         try: # for the non conformed file
             self.recup_date_file()
@@ -52,46 +55,44 @@ class bagfile(object):
 
 
     def recup_date_file(self): # fct that collects all the data from the file name
-        l = self.name
+        l = self.name_folder
         l1 = l.split('.')
         l2 = l1[-1].split('_')
        
         self.action_name = '_'.join(l2[1:])
         self.micro_sec = l2[0]
         self.date = l1[0]
-        self.date_N = self.recup_date(l1[0])
+        self.date_N = self.recup_date(self.name_bag)
 
 
     def recup_path_bag(self): # fct that collects the rosbag path
-        files = os.listdir(self.path_file)
-        for name in files:
-            l = name.split('.')
-            if (l[-1] == 'bag') or (l[-1] == 'active'):
-                self.bag_path = self.path_file + '/' + name
-                self.name_bag = name
-
+        l = self.name_bag.split('.')
+        if (l[-1] == 'bag') or (l[-1] == 'active') and (l[-2] != 'orig'):
+            self.bag_path = self.path_file + '/' + self.name_bag
+         
 
     def display_data(self, all_var = False): # fct to display file data
-        print("Import file : ", self.name)
+        print("Import file : ", self.name_folder)
         if all_var == True:
             print("Name of the action :",self.action_name)
             print("Date : ",self.date_N)
-         
 
-    def recup_date(self, date, test = False):
-        l = date.split('-')
+
+    def recup_date(self, name, test = False):
+
+        L = name.split('_')
+        l = L[0].split('-')
 
         if test == True:
             if len(l) != 6:
                 print("Error the date limit should be at the format 'xx-xx-xx-xx-xx-xx' ")
-        days =int(l[0])
-        month = int(l[1])
-        year = int(l[2])
-        hours = int(l[3])
-        minutes = int(l[4])
-        seconds = int(l[5])
+            D = datetime.strptime(L[0], '%d-%m-%Y-%H-%M-%S')
 
-        return(datetime(year, month, days, hours, minutes, seconds))
+        else:
+            D = datetime.strptime(L[0], '%Y-%m-%d-%H-%M-%S')
+
+        return(D)
+
 
 
 # -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
@@ -222,6 +223,7 @@ class Drix_data(object):
             
         index = 0
         index_act = 0
+        TZ_off_set = False # Time zone off set variable
         previous_act = L_bags[0].action_name
         p = Proj(proj='utm',zone=10,ellps='WGS84')
 
@@ -252,8 +254,13 @@ class Drix_data(object):
 
                 for topic, msg, t in bag.read_messages(topics = self.list_topics):
 
+                    if TZ_off_set == False:
+                        diff = int(bagfile.date_N.strftime("%H")) - int(datetime.fromtimestamp(int(t.to_sec())).strftime("%H")) # diff btw the actual end survey time zone
+                        print("diff ",diff)
+                        TZ_off_set = True
+
                     time_raw = t.to_sec()
-                    time = datetime.fromtimestamp(int(t.to_sec())) 
+                    time = datetime.fromtimestamp(int(t.to_sec())) + np.sign(diff)*timedelta(hours=abs(diff), minutes=00)
                     time_str = str(time)
 
                     if time <= bagfile.datetime_date_f:
@@ -605,10 +612,14 @@ def recup_data(date_d, date_f, path):
 
     for name in files:
         Path = path + '/' + name
-        bg = bagfile(name, Path, path, date_d, date_f)
 
-        if bg.bag_path != None: # in order to kick the file without rosbag
-            l_bags.append(bg)
+        files2 = os.listdir(Path)
+
+        for n in files2:
+            bg = bagfile(name, n, Path, path, date_d, date_f)
+
+            if bg.bag_path != None: # in order to kick the file without rosbag
+                l_bags.append(bg)
 
 
     if l_bags[0].datetime_date_d > l_bags[0].datetime_date_f:
@@ -714,7 +725,8 @@ if __name__ == '__main__':
     # - - - - - - - - - - -  Script arguments - - - - - - - - - - - -
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-    path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
+    #path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
+    path = "/home/julienpir/Desktop/New_data_rosbag"
     date_d = "07-05-2021-06-00-00"
     date_f = "07-05-2021-11-41-09"
 
