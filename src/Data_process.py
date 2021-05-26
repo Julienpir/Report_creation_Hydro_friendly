@@ -77,16 +77,33 @@ def handle_actions(Data):
 
         # - - - - - - gps_actions - - - - - -
 
+        print("   ")
+        print(" - - gps_actions - - ")
+
         N = len(Data.gps_raw['Time_str'])
         L = []
-        list_index_act = [x for x in range(Data.gps_raw['action_type_index'][N-1] + 1)]
+        list_index_act = [x for x in range(Data.gps_raw['action_type_index'].tolist()[-1] + 1)]
+
+        print("list_index_act : ", list_index_act)
 
         for val in list_index_act:
+
             df = Data.gps_raw.loc[Data.gps_raw['action_type_index'] == val]
-            L.append(df.iloc[0])
-            L.append(df.iloc[-1])
+
+            try:
+
+                L.append(df.iloc[0])
+                L.append(df.iloc[-1])
+
+            except:
+                print('val : ',val)
+                print('df : ', df)
+                pass
+
 
         Data.gps_actions = pd.concat(L,sort=False)
+
+        print("   ")
 
 
         # - - - - - - Actions_data - - - - - -
