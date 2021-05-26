@@ -183,21 +183,31 @@ class Drix_data(object):
 
     def test_rosbag(self,bagfile):
         path = bagfile.bag_path
-        try:
+        
+        l = bagfile.name_bag.split('.')
+
+        if l[-1] == 'active': # because "try" some times return error for nothing when it's not a bag.active
+
+            try:
+                bag = rosbag.Bag(path)
+                return(bag)
+
+            except:
+
+                subprocess.run(["rosbag", "reindex", path])
+
+                try:
+                    bag = rosbag.Bag(path)
+                    return(bag)
+
+                except:
+                    print(bagfile.name_bag, ' is not readable')
+                    return(False)
+
+        else:
+
             bag = rosbag.Bag(path)
             return(bag)
-
-        except:
-            subprocess.run(["rosbag", "reindex", path])
-            pass
-
-        try:
-            bag = rosbag.Bag(path)
-            return(bag)
-
-        except:
-            print(bagfile.name, ' is not readable')
-            return(False)
 
 
     def rosbag2pd(self, L_bags):
@@ -256,7 +266,7 @@ class Drix_data(object):
 
                     if TZ_off_set == False:
                         diff = int(bagfile.date_N.strftime("%H")) - int(datetime.fromtimestamp(int(t.to_sec())).strftime("%H")) # diff btw the actual end survey time zone
-                        print("diff ",diff)
+                        #print("diff ",diff)
                         TZ_off_set = True
 
                     time_raw = t.to_sec()
