@@ -259,6 +259,7 @@ class Drix_data(object):
             dic_autopilot = {'Time_raw':[],'Time':[],'Time_str':[],'ActiveSpeed':[],'Speed':[], 'Delta' : [],'Regime':[],'yawRate':[]}
 
             bag = self.test_rosbag(bagfile)
+            print(bagfile.name_bag)
 
             if bag != False:
 
@@ -735,10 +736,8 @@ if __name__ == '__main__':
     # - - - - - - - - - - -  Script arguments - - - - - - - - - - - -
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
-    #path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
-    path = "/home/julienpir/Desktop/New_data_rosbag"
-    date_d = "07-05-2021-06-00-00"
-    date_f = "07-05-2021-11-41-09"
-
+    path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
+    date_d = "01-02-2021-10-40-00"
+    date_f = "01-02-2021-11-00-00"
 
     code_launcher(date_d, date_f, path)
