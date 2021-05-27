@@ -193,7 +193,7 @@ class Drix_data(object):
                 return(bag)
 
             except:
-
+                print("Reindex operation of ",bagfile.name_bag)
                 subprocess.run(["rosbag", "reindex", path])
 
                 try:
