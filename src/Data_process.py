@@ -3,9 +3,6 @@ from datetime import datetime, timedelta
 import numpy as np
 from pyproj import Proj
 
-import pyarrow.parquet as pq
-import pyarrow as pa
-
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 #               This script handles all the data processing function
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
@@ -76,7 +73,6 @@ def handle_actions(Data):
         print("   ")
         print(" - - gps_actions - - ")
 
-        N = len(Data.gps_raw['Time_str'])
         L = []
         list_index_act = [x for x in range(Data.gps_raw['action_type_index'].tolist()[-1] + 1)]
 
