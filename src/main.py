@@ -15,7 +15,6 @@ import Data_process as Dp # local import
 import IHM # local import
 import Data_collecting as Dc
 
-
 from mdt_msgs.msg import Gps
 from ixblue_ins_msgs.msg import Ins
 from drix_msgs.msg import Telemetry2
@@ -179,6 +178,8 @@ class Drix_data(object):
 
         self.Actions_data = None # regroup all actions statistics
 
+        report('List of ROS topics wanted : ' + str(self.list_topics))
+
         self.rosbag2pd(L_bags)
 
 
@@ -203,6 +204,7 @@ class Drix_data(object):
 
                 except:
                     print(bagfile.name_bag, ' is not readable')
+                    report(bagfile.name_bag + ' is not readable')
                     return(False)
 
 
@@ -271,6 +273,8 @@ class Drix_data(object):
 
                     if TZ_off_set == False:
                         diff = int(bagfile.date_N.strftime("%H")) - int(datetime.fromtimestamp(int(t.to_sec())).strftime("%H")) # diff btw the actual end survey time zone
+                        report(" ")
+                        report('Diff time : ' + str(diff))
                         TZ_off_set = True
 
                     time = datetime.fromtimestamp(int(t.to_sec())) + np.sign(diff)*timedelta(hours=abs(diff), minutes=00)
@@ -303,8 +307,8 @@ class Drix_data(object):
                             dic_drix_status['remoteControlLost'].append(0)
                             dic_drix_status['keel_state'].append(m.keel_state)
                             dic_drix_status['shutdown_requested'].append(m.shutdown_requested)
-                            dic_drix_status['reboot_requested'].append(0)
                             # dic_drix_status['reboot_requested'].append(m.reboot_requested)
+                            dic_drix_status['reboot_requested'].append(0)
                           
                         if topic == '/d_phins/aipov':
                             m:aipov = msg 
@@ -491,91 +495,119 @@ class Drix_data(object):
         print('Rosbag data extraction finished, in ',str(diff))
         print("  ")
 
+        report(" ")
+        report('Rosbag data extraction finished, in '+ str(diff))
+        report(" ")
+
+
         if len(gps_List_pd) > 0:
             self.gps_raw = pd.concat(gps_List_pd, ignore_index=True)
             print("gps data imported",len(gps_List_pd),'/',len(L_bags))
+            report("gps data imported : " + str(len(gps_List_pd)) + '/' + str(len(L_bags)))
         else:
             print('Error, no gps data found')
+            report('Error, no gps data found')
 
 
         if len(drix_status_List_pd) > 0:
             self.drix_status_raw = pd.concat(drix_status_List_pd, ignore_index=True)
             print("Drix_status data imported",len(drix_status_List_pd),'/',len(L_bags))
+            report("Drix_status data imported : " + str(len(drix_status_List_pd)) + '/' + str(len(L_bags)))
         else:
             print('Error, no drix_status data found')
+            report('Error, no drix_status data found')
 
 
         if len(d_phins_List_pd) > 0:
             self.phins_raw = pd.concat(d_phins_List_pd, ignore_index=True)
             print("Phins data imported",len(d_phins_List_pd),'/',len(L_bags))
+            report("Phins data imported : " + str(len(d_phins_List_pd)) + '/' + str(len(L_bags)))
         else:
             print('Error, no phins data found')
+            report('Error, no phins data found')
 
 
         if len(telemetry_List_pd) > 0:
             self.telemetry_raw = pd.concat(telemetry_List_pd, ignore_index=True)
             print("Telemetry data imported",len(telemetry_List_pd),'/',len(L_bags))
+            report("Telemetry data imported : " + str(len(telemetry_List_pd)) + '/' + str(len(L_bags)))
         else:
             print('Error, no telemetry data found')
+            report('Error, no telemetry data found')
 
 
         if len(mothership_List_pd) > 0:
             self.mothership_raw = pd.concat(mothership_List_pd, ignore_index=True)
             print("Mothership data imported",len(mothership_List_pd),'/',len(L_bags))
+            report("Mothership data imported : " + str(len(mothership_List_pd)) + '/' + str(len(L_bags)))
         else:
             print('Error, no mothership data found')
+            report('Error, no mothership data found')
 
 
         if len(kongsberg_status_List_pd) > 0:
             self.kongsberg_status_raw = pd.concat(kongsberg_status_List_pd, ignore_index=True)
             print('kongsberg_status data imported ',len(kongsberg_status_List_pd),'/',len(L_bags))
+            report("kongsberg_status data imported : " + str(len(kongsberg_status_List_pd)) + '/' + str(len(L_bags)))
 
         else:
             print('Error, no kongsberg_status data found')
+            report('Error, no kongsberg_status data found')
 
 
         if len(rc_command_pd) > 0:
             self.rc_command_raw = pd.concat(rc_command_pd, ignore_index=True)
             print('RC_command data imported ',len(rc_command_pd),'/',len(L_bags))
+            report("RC_command data imported : " + str(len(rc_command_pd)) + '/' + str(len(L_bags)))
 
         else:
             print('Error, no RC_command data found')
+            report('Error, no RC_command data found')
 
 
         if len(gpu_state_pd) > 0:
             self.gpu_state_raw = pd.concat(gpu_state_pd, ignore_index=True)
             print('GPU State data imported ',len(gpu_state_pd),'/',len(L_bags))
+            report("GPU State data imported : " + str(len(gpu_state_pd)) + '/' + str(len(L_bags)))
 
         else:
             print('Error, no GPU State data found')
+            report('Error, no GPU State data found')
 
 
         if len(trimmer_status_pd) > 0:
             self.trimmer_status_raw = pd.concat(trimmer_status_pd, ignore_index=True)
             print('Trimmer Status data imported ',len(trimmer_status_pd),'/',len(L_bags))
+            report("Trimmer Status data imported : " + str(len(trimmer_status_pd)) + '/' + str(len(L_bags)))
 
         else:
             print('Error, no Trimmer Status data found')
+            report('Error, no Trimmer Status data found')
 
 
         if len(iridium_status_pd) > 0:
             self.iridium_status_raw = pd.concat(iridium_status_pd, ignore_index=True)
             print('Iridium Status data imported ',len(iridium_status_pd),'/',len(L_bags))
+            report("Iridium Status data imported : " + str(len(iridium_status_pd)) + '/' + str(len(L_bags)))
 
         else:
             print('Error, no Iridium Status data found')
+            report('Error, no Iridium Status data found')
 
         if len(autopilot_pd) > 0:
             self.autopilot_raw = pd.concat(autopilot_pd, ignore_index=True)
             print('Autopilot output data imported ',len(autopilot_pd),'/',len(L_bags))
+            report("Autopilot output data imported : " + str(len(autopilot_pd)) + '/' + str(len(L_bags)))
 
         else:
             print('Error, no Autopilot output data found')
+            report('Error, no Autopilot output data found')
 
 
         self.diagnostics_raw = L_diag
         print("Diagnostics data imported")
         print("  ")
+        report(' ')
 
 
 
@@ -619,9 +651,19 @@ def recup_data(date_d, date_f, path):
 
 
 
+def report(msg):
+
+    f = open("../log.txt", "a")
+
+    f.write("\n" + msg)
+
+    f.close()
+
+
+
 # -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 
-def code_launcher(date_d, date_f, path):
+def code_launcher(date_d, date_f, path, debug = False):
 
     # -------------------------------------------
     # - - - - - - Data Recovery - - - - - - -
@@ -629,6 +671,17 @@ def code_launcher(date_d, date_f, path):
 
     # - - - - - - Files recovery - - - - - -
     L_bags = recup_data(date_d, date_f, path)
+
+
+    open('../log.txt', 'w').close() # deletes the contents of the file 
+
+    report('Script launched the '+ datetime.now().strftime('%d, %b %Y at %H:%M'))
+    report('Report Mission from : '+ date_d + ' and ' + date_f)
+    report('Data path : ' + path)
+    report(' ')
+    l_name_bags = [bag.name_bag for bag in L_bags]
+    report('Rosbags found : ' + str(l_name_bags))
+    report(' ')
 
     # - - - - - - Rosbags recovery - - - - - -
     Data = Drix_data(L_bags)
@@ -643,6 +696,7 @@ def code_launcher(date_d, date_f, path):
     # -------------------------------------------
     # - - - - - - Data processing - - - - - - -
     # -------------------------------------------
+    report('Data processing : ')
 
     if (Data.mothership_raw is not None) and (Data.gps_raw is not None):
         Dp.add_dist_mothership_drix(Data)
@@ -689,8 +743,16 @@ def code_launcher(date_d, date_f, path):
         print("Diagnostics data processed")
 
 
+    # if debug:
+        # on transmet le fichier 
+        # sinon il reste la 
+
+
     subprocess.run(["tar", "-Jcvf", Data.result_path_compressed, Data.result_path])
 
+    # /!\ Temporaire 
+    file_size = os.path.getsize(Data.result_path_compressed) 
+    report('data.tar.xz size : ' + str(file_size))
 
 
 
@@ -706,7 +768,7 @@ if __name__ == '__main__':
 
     path = "/home/julienpir/Documents/iXblue/20210120 DriX6 Survey OTH/mission_logs"
     date_d = "01-02-2021-10-00-00"
-    date_f = "01-02-2021-10-10-00"
+    date_f = "01-02-2021-12-10-00"
 
     code_launcher(date_d, date_f, path)
 

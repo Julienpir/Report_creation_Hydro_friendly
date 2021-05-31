@@ -237,6 +237,10 @@ def plot_telemetry(Data):
 		Red_line = True
 
 	else: 
+		print('-------------------')
+		print("Data.telemetry : ",Data.telemetry.keys())
+		print('-------------------')
+		
 		fig0 = Binary_plot(Data.telemetry['is_drix_started'], Title[0], default_value=True)
 		fig1 = Binary_plot(Data.telemetry['is_navigation_lights_on'], Title[1], default_value=False)
 		fig2 = Binary_plot(Data.telemetry['is_foghorn_on'], Title[2], default_value=False)

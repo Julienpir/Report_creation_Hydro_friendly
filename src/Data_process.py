@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import numpy as np
 from pyproj import Proj
 
+import main as Dr # Data_recovery 
+
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
 #               This script handles all the data processing function
 #=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#
@@ -70,27 +72,16 @@ def handle_actions(Data):
 
         # - - - - - - gps_actions - - - - - -
 
-        print("   ")
-        print(" - - gps_actions - - ")
-
         L = []
-        list_index_act = [x for x in range(Data.gps_raw['action_type_index'].tolist()[-1] + 1)]
-
-        print("list_index_act : ", list_index_act)
+        list_index_act = Data.gps_raw['action_type_index'].unique().tolist()
 
         for val in list_index_act:
 
             df = Data.gps_raw.loc[Data.gps_raw['action_type_index'] == val]
 
-            try:
+            L.append(df.iloc[0])
+            L.append(df.iloc[-1])
 
-                L.append(df.iloc[0])
-                L.append(df.iloc[-1])
-
-            except:
-                print('val : ',val)
-                print('df : ', df)
-                pass
 
         Data.gps_actions = pd.concat(L,sort=False)
 
@@ -245,6 +236,19 @@ def extract_gps_data(Data):
     for k in L:
         G_variable += len(df3[k])
 
+    # - - - -
+
+    Dr.report(' ')
+    Dr.report('- - /gps - -')
+    Dr.report('Data raw shape : ' + str(Data.gps_raw.shape))
+    Dr.report(' ')
+    Dr.report('gps, shape : ' + str(df1.shape))
+    Dr.report('dist, shape : ' + str(df2.shape))
+    Dr.report('speed, shape : ' + str(df3.shape))
+
+
+
+
 
 # = = = = = = = = = = = = = = = = = = /mothership_gps  = = = = = = = = = = = = = = = = = = = = = = = = = =
 
@@ -285,17 +289,22 @@ def extract_drix_status_data(Data):
     
     path = Data.result_path + "/drix_status"
     df = Data.drix_status_raw
+    L = []
 
-    df1 = noisy_msg(df, 'thruster_RPM', path, 100, N_round = 0)
-    df2 = centered_sawtooth_curve(df,'rudderAngle_deg', path, 200, N_round = 0)
-    df3 = noisy_msg(df,'gasolineLevel_percent', path, 15000, N_round = 0)
-    df4 = data_reduced(df,'emergency_mode', path)
-    df5 = data_reduced(df, 'remoteControlLost', path)
-    df6 = data_reduced(df, 'shutdown_requested', path)
-    df7 = data_reduced(df, 'reboot_requested', path)
-    df8 = extract_drix_mode_data(df, path)
-    df9 = extract_drix_clutch_data(df, path)
-    df10 = extract_keel_state_data(df, path)
+    L.append(noisy_msg(df, 'thruster_RPM', path, 100, N_round = 0))
+    L.append(centered_sawtooth_curve(df,'rudderAngle_deg', path, 200, N_round = 0))
+    L.append(noisy_msg(df,'gasolineLevel_percent', path, 15000, N_round = 0))
+    L.append(data_reduced(df,'emergency_mode', path))
+    L.append(data_reduced(df, 'remoteControlLost', path))
+    L.append(data_reduced(df, 'shutdown_requested', path))
+    L.append(data_reduced(df, 'reboot_requested', path))
+    L.append(extract_drix_mode_data(df, path))
+    L.append(extract_drix_clutch_data(df, path))
+    L.append(extract_keel_state_data(df, path))
+
+    # - - - 
+
+    mode_debug('drix_status', L, df.shape)
 
 
 # - - - - - - - - 
@@ -317,7 +326,7 @@ def extract_drix_mode_data(dff, path):
 
     df = data_reduced2(list_msg, dff['Time'], 'drix_mode', path)
 
-    return(df)
+    return('drix_mode', df.shape)
 
 
 # - - - - - - - - 
@@ -339,7 +348,7 @@ def extract_drix_clutch_data(dff, path): # same operation as extract_drix_mode()
 
     df = data_reduced2(list_msg, dff['Time'], 'drix_clutch', path)
 
-    return(df)
+    return('drix_clutch', df.shape)
 
 
 # - - - - - - - - 
@@ -362,7 +371,7 @@ def extract_keel_state_data(dff, path): # same operation as extract_drix_mode()
 
     df = data_reduced2(list_msg, dff['Time'], 'keel_state', path)
 
-    return(df)
+    return('keel_state', df.shape)
 
 
 
@@ -374,9 +383,15 @@ def extract_phins_data(Data):
     df = Data.phins_raw
     n = 100
 
-    df1 = noisy_msg(df, 'headingDeg', path, n, N_round = 1)
-    df2 = sawtooth_curve(df, 'rollDeg', path, n, N_round = 1)
-    df3 = sawtooth_curve(df, 'pitchDeg', path, n, N_round = 1)
+    L = []
+
+    L.append(noisy_msg(df, 'headingDeg', path, n, N_round = 1))
+    L.append(sawtooth_curve(df, 'rollDeg', path, n, N_round = 1))
+    L.append(sawtooth_curve(df, 'pitchDeg', path, n, N_round = 1))
+
+    # - - - 
+
+    mode_debug('phins', L, df.shape)
 
     # df1 = noisy_msg(df, 'headingDeg', path, n, compression = False, N_round = 1)
     # df2 = sawtooth_curve(df, 'rollDeg', path, n, compression = False, N_round = 1)
@@ -398,37 +413,44 @@ def extract_telemetry_data(Data):
     path = Data.result_path + "/telemetry"
     df = Data.telemetry_raw
 
-    df1 = data_reduced(df, 'is_drix_started', path)
-    df2 = data_reduced(df, 'is_navigation_lights_on', path)
-    df3 = data_reduced(df, 'is_foghorn_on', path)
-    df4 = data_reduced(df, 'is_fans_on', path)
-    df5 = data_reduced(df, 'is_water_temperature_alarm_on', path)
-    df6 = data_reduced(df, 'is_oil_pressure_alarm_on', path)
-    df7 = data_reduced(df, 'is_water_in_fuel_on', path)
-    df8 = data_reduced(df, 'electronics_water_ingress', path)
-    df9 = data_reduced(df, 'electronics_fire_on_board', path)
-    df10 = data_reduced(df, 'engine_water_ingress', path)
-    df11 = data_reduced(df, 'engine_fire_on_board', path)
+    L = []
 
-    df12 = noisy_msg(df, 'oil_pressure_Bar', path, 100, N_round = 3)
-    df13 = data_reduced(df, 'engine_water_temperature_deg', path)
-    df14 = data_reduced(df, 'engineon_hours_h', path)
-    df15 = data_reduced(df, 'main_battery_voltage_V', path)
-    df16 = data_reduced(df, 'backup_battery_voltage_V', path)
-    df17 = noisy_msg(df, 'engine_battery_voltage_V', path, 100, N_round = 1)
-    df18 = data_reduced(df, 'percent_main_battery', path)
-    df19 = data_reduced(df, 'percent_backup_battery', path)
+    L.append(data_reduced(df, 'is_drix_started', path))
+    L.append(data_reduced(df, 'is_navigation_lights_on', path))
+    L.append(data_reduced(df, 'is_foghorn_on', path))
+    L.append(data_reduced(df, 'is_fans_on', path))
+    L.append(data_reduced(df, 'is_water_temperature_alarm_on', path))
+    L.append(data_reduced(df, 'is_oil_pressure_alarm_on', path))
+    L.append(data_reduced(df, 'is_water_in_fuel_on', path))
+    L.append(data_reduced(df, 'electronics_water_ingress', path))
+    L.append(data_reduced(df, 'electronics_fire_on_board', path))
+    L.append(data_reduced(df, 'engine_water_ingress', path))
+    L.append(data_reduced(df, 'engine_fire_on_board', path))
 
-    df20 = data_reduced(df, 'consumed_current_main_battery_Ah', path)
-    df21 = data_reduced(df, 'consumed_current_backup_battery_Ah', path)
-    df22 = data_reduced(df, 'current_main_battery_A', path)
-    df23 = data_reduced(df, 'current_backup_battery_A', path)
-    df24 = data_reduced(df, 'time_left_main_battery_mins', path)
-    df25 = data_reduced(df, 'time_left_backup_battery_mins', path)
-    df26 = noisy_msg(df, 'electronics_temperature_deg', path, 100, N_round = 1)
-    df27 = noisy_msg(df, 'electronics_hygrometry_percent', path, 100, N_round = 1)
-    df28 = data_reduced(df, 'engine_temperature_deg', path)
-    df29 = data_reduced(df, 'engine_hygrometry_percent', path)
+    L.append(noisy_msg(df, 'oil_pressure_Bar', path, 100, N_round = 3))
+    L.append(data_reduced(df, 'engine_water_temperature_deg', path))
+    L.append(data_reduced(df, 'engineon_hours_h', path))
+    L.append(data_reduced(df, 'main_battery_voltage_V', path))
+    L.append(data_reduced(df, 'backup_battery_voltage_V', path))
+    L.append(noisy_msg(df, 'engine_battery_voltage_V', path, 100, N_round = 1))
+    L.append(data_reduced(df, 'percent_main_battery', path))
+    L.append(data_reduced(df, 'percent_backup_battery', path))
+
+    L.append(data_reduced(df, 'consumed_current_main_battery_Ah', path))
+    L.append(data_reduced(df, 'consumed_current_backup_battery_Ah', path))
+    L.append(data_reduced(df, 'current_main_battery_A', path))
+    L.append(data_reduced(df, 'current_backup_battery_A', path))
+    L.append(data_reduced(df, 'time_left_main_battery_mins', path))
+    L.append(data_reduced(df, 'time_left_backup_battery_mins', path))
+    L.append(noisy_msg(df, 'electronics_temperature_deg', path, 100, N_round = 1))
+    L.append(noisy_msg(df, 'electronics_hygrometry_percent', path, 100, N_round = 1))
+    L.append(data_reduced(df, 'engine_temperature_deg', path))
+    L.append(data_reduced(df, 'engine_hygrometry_percent', path))
+
+    # - - - 
+
+    mode_debug('telemetry', L, df.shape)
+
 
 
 
@@ -438,13 +460,19 @@ def extract_gpu_state_data(Data):
 
     path = Data.result_path + "/gpu_state"
     df = Data.gpu_state_raw
+    L = []
 
-    df1 = noisy_msg(df, 'temperature_deg_c', path, 60, N_round = 1)
-    df2 = sawtooth_curve(df, 'gpu_utilization_percent', path, 10, N_round = 0)
-    df3 = sawtooth_curve(df, 'mem_utilization_percent', path, 20, N_round = 0)
-    df4 = data_reduced(df, 'total_mem_GB', path)
-    df5 = noisy_msg(df, 'power_consumption_W', path, 10, N_round = 1)
-    df6 = sawtooth_curve(df, 'power_consumption_W', path, 60, N_round = 1)
+    L.append(noisy_msg(df, 'temperature_deg_c', path, 60, N_round = 1))
+    L.append(sawtooth_curve(df, 'gpu_utilization_percent', path, 10, N_round = 0))
+    L.append(sawtooth_curve(df, 'mem_utilization_percent', path, 20, N_round = 0))
+    L.append(data_reduced(df, 'total_mem_GB', path))
+    L.append(noisy_msg(df, 'power_consumption_W', path, 10, N_round = 1))
+    L.append(sawtooth_curve(df, 'power_consumption_W', path, 60, N_round = 1))
+
+    # - - - 
+
+    mode_debug('gpu_state', L, df.shape)
+    
 
 
 # = = = = = = = = = = = = = = = = = = /trimmer_status  = = = = = = = = = = = = = = = = = = = = = = = = = 
@@ -453,9 +481,10 @@ def extract_trimmer_status_data(Data):
 
     path = Data.result_path + "/trimmer_status"
     df = Data.trimmer_status_raw
+    L = []
 
-    df1 = sawtooth_curve(df, 'primary_powersupply_consumption_A', path, n = 100, N_round = 2) 
-    df2 = sawtooth_curve(df, 'secondary_powersupply_consumption_A', path, n = 100, N_round = 2) 
+    L.append(sawtooth_curve(df, 'primary_powersupply_consumption_A', path, n = 100, N_round = 2)) 
+    L.append(sawtooth_curve(df, 'secondary_powersupply_consumption_A', path, n = 100, N_round = 2))
 
     # df1 = sawtooth_curve(df, 'primary_powersupply_consumption_A', path, n = 100, compression = False, N_round = 2) 
     # df2 = sawtooth_curve(df, 'secondary_powersupply_consumption_A', path, n = 100, compression = False, N_round = 2) 
@@ -467,9 +496,13 @@ def extract_trimmer_status_data(Data):
     # new = pd.concat([d1, d2, d3], axis=1)
     # new.to_csv(path + '/power_consumption_A.csv', index=False)
 
-    df3 = noisy_msg(df, 'motor_temperature_degC', path, 500, N_round = 1)
-    df4 = noisy_msg(df, 'pcb_temperature_degC', path, 400, N_round = 1)
-    df5 = data_reduced(df, 'relative_humidity_percent', path)
+    L.append(noisy_msg(df, 'motor_temperature_degC', path, 500, N_round = 1))
+    L.append(noisy_msg(df, 'pcb_temperature_degC', path, 400, N_round = 1))
+    L.append(data_reduced(df, 'relative_humidity_percent', path))
+
+    # - - - 
+
+    mode_debug('trimmer_status', L, df.shape)
 
 
 
@@ -479,18 +512,23 @@ def extract_iridium_status_data(Data):
 
     path = Data.result_path + "/iridium"
     df = Data.iridium_status_raw
+    L = []
 
-    df1 = data_reduced(df, 'is_iridium_link_ok', path)
-    df2 = data_reduced(df, 'signal_strength', path)
-    df3 = extract_registration_status_data(df, path)
-    df4 = data_reduced(df, 'mo_status_code', path)
-    df5 = data_reduced(df, 'last_mo_msg_sequence_number', path)
-    df6 = data_reduced(df, 'mt_status_code', path)
-    df7 = data_reduced(df, 'mt_msg_sequence_number', path)
-    df8 = data_reduced(df, 'mt_length', path)
-    df9 = data_reduced(df, 'gss_queued_msgs', path)
-    df10 = data_reduced(df, 'cmd_queue', path)
-    df11 = data_reduced(df, 'failed_transaction_percent', path)
+    L.append(data_reduced(df, 'is_iridium_link_ok', path))
+    L.append(data_reduced(df, 'signal_strength', path))
+    L.append(extract_registration_status_data(df, path))
+    L.append(data_reduced(df, 'mo_status_code', path))
+    L.append(data_reduced(df, 'last_mo_msg_sequence_number', path))
+    L.append(data_reduced(df, 'mt_status_code', path))
+    L.append(data_reduced(df, 'mt_msg_sequence_number', path))
+    L.append(data_reduced(df, 'mt_length', path))
+    L.append(data_reduced(df, 'gss_queued_msgs', path))
+    L.append(data_reduced(df, 'cmd_queue', path))
+    L.append(data_reduced(df, 'failed_transaction_percent', path))
+
+    # - - - 
+
+    mode_debug('iridium', L, df.shape)
 
 
 # - - - - - - - - - -
@@ -513,8 +551,7 @@ def extract_registration_status_data(dff, path): # same operation as extract_dri
     list_msg = [encoder_dic[val] for val in dff['registration_status']]
     df = data_reduced2(list_msg, dff['Time'], 'registration_status', path)
 
-
-    return(df)
+    return('registration_status', df.shape)
 
 
 
@@ -525,13 +562,18 @@ def extract_autopilot_data(Data):
 
     path = Data.result_path + "/autopilot"
     df = Data.autopilot_raw
+    L = []
 
-    df1 = noisy_msg(df,'Speed', path, 50, N_round = 2)
-    df2 = data_reduced(df, 'ActiveSpeed', path)
-    df3 = sawtooth_curve(df, 'Delta', path, 50, N_round = 3)
-    df4 = sawtooth_curve(df, 'Regime', path, 50, N_round = 3)
-    df5 = sawtooth_curve(df, 'yawRate', path, 50, N_round = 2)
-    df6 = extract_diff_speed_data(Data, path)
+    L.append(noisy_msg(df,'Speed', path, 50, N_round = 2))
+    L.append(data_reduced(df, 'ActiveSpeed', path))
+    L.append(sawtooth_curve(df, 'Delta', path, 50, N_round = 3))
+    L.append(sawtooth_curve(df, 'Regime', path, 50, N_round = 3))
+    L.append(sawtooth_curve(df, 'yawRate', path, 50, N_round = 2))
+    L.append(extract_diff_speed_data(Data, path))
+
+    # - - - 
+
+    mode_debug('autopilot', L, df.shape)
     
 
 # - - - - - - - - - -
@@ -591,7 +633,7 @@ def extract_diff_speed_data(Data, path, N = 5):
 
     compress_data(path, 'speed_autopilot', df)
 
-    return(df)
+    return('speed_autopilot', df.shape)
 
 
 
@@ -614,10 +656,16 @@ def extract_rc_command_data(Data):
 
     y_axis = {"vals":list(encoder_dic.values()),"keys":list(encoder_dic.keys())}
     list_msg = [encoder_dic[val] for val in dff['reception_mode']]
+    L = []
 
     df = data_reduced2(list_msg, dff['Time'], 'reception_mode', path)
-
     compress_data(path, 'reception_mode', df)
+
+    L.append(('reception_mode', df.shape))
+
+    # - - - 
+
+    mode_debug('rc_command', L, dff.shape)
 
 
 
@@ -629,6 +677,11 @@ def extract_diagnostics_data(Data):
     L = []
     path = Data.result_path + "/diagnostics"
     dff = Data.diagnostics_raw
+
+    Dr.report(' ')
+    Dr.report('- - /diagnostics - -')
+    Dr.report(' ')
+
 
     for k in dff.L_keys:
             n = len(np.unique(dff.L[k].level))
@@ -645,8 +698,14 @@ def extract_diagnostics_data(Data):
 
                 compress_data(path, Name, df)
                 L.append(df)
+
+                Dr.report(Name + ', shape : ' + str(df.shape))
     
-    # print("G_variable ",G_variable)
+    print("G_variable ",G_variable)
+
+    Dr.report(' ')
+    Dr.report('Global number of data : ' + str(G_variable))
+    Dr.report(' ')
 
 
 
@@ -654,7 +713,6 @@ def extract_diagnostics_data(Data):
 # = = = = = = = = = = = = = = = = = = = = Tools  = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 def return_G_variable():
-
     global G_variable
 
     print("Number of data after processing : ",G_variable)
@@ -709,7 +767,7 @@ def centered_sawtooth_curve(dff, msg, path, n = 10, compression = True, N_round 
     if compression:
         compress_data(path, msg, new)
 
-    return(new)
+    return(msg, new.shape)
 
 
 # - - - - - - - - - 
@@ -729,7 +787,7 @@ def sawtooth_curve(dff, msg, path, n = 10, compression = True, N_round = 3): # e
     if compression:
         compress_data(path, msg, new)
 
-    return(new)
+    return(msg, new.shape)
 
 
 # - - - - - - - - - 
@@ -748,7 +806,7 @@ def noisy_msg(dff, msg, path, n = 10, compression = True, N_round = 3): # data f
     if compression:
         compress_data(path, msg, new)
 
-    return(new)
+    return(msg, new.shape)
 
 
 # - - - - - - - - - 
@@ -787,7 +845,7 @@ def data_reduced(dff, msg, path, compression = True):
     if compression:
         compress_data(path, msg, df)
 
-    return(df)
+    return(msg, df.shape)
 
 
 # - - - - - - - - - - - - 
@@ -816,7 +874,6 @@ def data_simplification(list_msg, list_t):
 
     past_value = list_msg[0]
     past_t = list_t[0]
-
 
 
     for k in range(1, len(list_msg) - 1):
@@ -849,11 +906,25 @@ def compress_data(path, msg, df):
     L = df.columns.tolist()
 
     for k in L:
-        
         G_variable += len(df[k])
 
     name = path + '/' + msg + '.csv'
     df.to_csv(name, index=False)
+
+    return()
+
+
+# - - - - - - - - - - - - 
+
+def mode_debug(topic, L, shape): 
+
+    Dr.report(' ')
+    Dr.report('- - /'+ topic + ' - -')
+    Dr.report('Data raw shape : ' + str(shape))
+    Dr.report(' ')
+
+    for val in L:
+        Dr.report(val[0] + ', shape : '+ str(val[1]))
 
 
 # - - - - - - - - - - - - 
